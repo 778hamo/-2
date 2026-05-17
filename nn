@@ -1,0 +1,170 @@
+# =========================================================
+# NEURAL NETWORKS PROJECT
+# Fashion-MNIST Classification using MLP
+# =========================================================
+
+
+# =========================================================
+# 1. IMPORT LIBRARIES
+# =========================================================
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+from tensorflow.keras.datasets import fashion_mnist
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Flatten, Dropout
+from tensorflow.keras.utils import to_categorical
+
+from sklearn.model_selection import train_test_split
+
+
+# =========================================================
+# 2. LOAD DATASET
+# =========================================================
+
+(X_train, y_train), (X_test, y_test) = fashion_mnist.load_data()
+
+print("Training Data Shape :", X_train.shape)
+print("Testing Data Shape  :", X_test.shape)
+
+
+# =========================================================
+# 3. DISPLAY SAMPLE IMAGES
+# =========================================================
+
+class_names = [
+    'T-shirt/top',
+    'Trouser',
+    'Pullover',
+    'Dress',
+    'Coat',
+    'Sandal',
+    'Shirt',
+    'Sneaker',
+    'Bag',
+    'Ankle boot'
+]
+
+plt.figure(figsize=(10,10))
+
+for i in range(9):
+    plt.subplot(3,3,i+1)
+    plt.imshow(X_train[i], cmap='gray')
+    plt.title(class_names[y_train[i]])
+    plt.axis('off')
+
+plt.show()
+
+
+# =========================================================
+# 4. PREPROCESSING
+# =========================================================
+
+# NORMALIZATION
+
+X_train = X_train / 255.0
+X_test = X_test / 255.0
+
+
+# ONE HOT ENCODING
+
+y_train_cat = to_categorical(y_train, 10)
+y_test_cat = to_categorical(y_test, 10)
+
+
+# =========================================================
+# 5. TRAIN / VALIDATION SPLIT
+# =========================================================
+
+X_train, X_val, y_train_cat, y_val_cat = train_test_split(
+    X_train,
+    y_train_cat,
+    test_size=0.2,
+    random_state=42
+)
+
+print("Training Shape   :", X_train.shape)
+print("Validation Shape :", X_val.shape)
+
+
+# =========================================================
+# 6. BUILD FIRST MLP MODEL
+# =========================================================
+
+model = Sequential([
+
+    Flatten(input_shape=(28,28)),
+
+    Dense(128, activation='relu'),
+
+    Dropout(0.2),
+
+    Dense(64, activation='relu'),
+
+    Dense(10, activation='softmax')
+])
+
+model.summary()
+
+
+# =========================================================
+# 7. COMPILE MODEL
+# =========================================================
+
+model.compile(
+    optimizer='adam',
+    loss='categorical_crossentropy',
+    metrics=['accuracy']
+)
+
+
+# =========================================================
+# 8. TRAIN MODEL
+# =========================================================
+
+history = model.fit(
+    X_train,
+    y_train_cat,
+    epochs=15,
+    batch_size=32,
+    validation_data=(X_val, y_val_cat)
+)
+
+
+# =========================================================
+# 9. EVALUATE MODEL
+# =========================================================
+
+test_loss, test_accuracy = model.evaluate(X_test, y_test_cat)
+
+print("\n========== FIRST EXPERIMENT ==========")
+print("Test Loss     :", test_loss)
+print("Test Accuracy :", test_accuracy)
+
+
+# =========================================================
+# 10. LOSS CURVE
+# =========================================================
+
+plt.figure(figsize=(8,5))
+
+plt.plot(history.history['loss'], label='Training Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+
+plt.title('Training vs Validation Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+
+plt.legend()
+plt.show()
+
+
+# =========================================================
+# 11. ACCURACY CURVE
+# =========================================================
+
+plt.figure(figsize=(8,5))
+
+plt.plot(history.history['accuracy'], label='Training Accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
